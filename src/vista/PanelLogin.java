@@ -2,13 +2,14 @@ package vista;
 
 import java.awt.EventQueue;
 
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
+
 
 
 import conexion.Conexion;
@@ -27,7 +28,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+
 import java.awt.event.ActionEvent;
 import javax.swing.JPasswordField;
 import java.awt.Color;
@@ -126,26 +127,12 @@ public class PanelLogin extends JFrame {
 		        try {
 		            Firestore db = Conexion.conectar();
 
-		            boolean usuValido = cntrldr.verificarUsu(email, contraseña);
+		            DocumentSnapshot docUsu = cntrldr.verificarUsu(email, contraseña);
 
-		            if (!usuValido) {
+		            if (docUsu == null) {
 		                JOptionPane.showMessageDialog(null, "Usuario o contraseña incorrectos.");
 		                return;
 		            }
-
-		            List<QueryDocumentSnapshot> resultados = db.collection("usuarios")
-		                .whereEqualTo("email", email)
-		                .whereEqualTo("contraseña", contraseña)
-		                .get()
-		                .get()
-		                .getDocuments();
-
-		            if (resultados.isEmpty()) {
-		                JOptionPane.showMessageDialog(null, "El usuario no existe en la base de datos.");
-		                return;
-		            }
-
-		            DocumentSnapshot docUsu = resultados.get(0);
 
 		            Usuario usuario = new Usuario(
 		                docUsu.getString("nombre"),
@@ -157,25 +144,22 @@ public class PanelLogin extends JFrame {
 		            );
 
 		            List<Workouts> workoutsDisp = cntrldr.cargarWorkoutsDesdeFirestore(db);
-		            
 
 		            JOptionPane.showMessageDialog(null, "Accediendo a la Aplicación...");
 		            PanelWorkouts siguiente = new PanelWorkouts(docUsu, workoutsDisp);
 
-		       
 		            ArrayList<Historial> historialList = new ArrayList<>(cntrldr.obtenerHistorialWorkouts(docUsu.getId()));
-		            boolean backupOk = cntrldr.guardarBackupUsuario(usuario,workoutsDisp,historialList);
+		            boolean backupOk = cntrldr.guardarBackupUsuario(usuario, workoutsDisp, historialList);
 
 		            if (backupOk)
 		                System.out.println("✅ Backup generado para: " + usuario.getNombre());
 		            else
 		                System.out.println("❌ Error generando backup para usuario.");
-		          
 
 		            siguiente.setVisible(true);
 		            dispose();
 
-		        } catch (InterruptedException | ExecutionException | IOException ex) {
+		        } catch (IOException ex) {
 		            ex.printStackTrace();
 		            JOptionPane.showMessageDialog(null, "Error al conectar con Firestore.");
 		        }
@@ -201,7 +185,7 @@ public class PanelLogin extends JFrame {
 		panel.add(btnRgstr);
 		
 		JLabel lblNewLabel = new JLabel("");
-		lblNewLabel.setIcon(new ImageIcon("C:\\Users\\in2dm3-a\\Pictures\\logoBajaExposicion.png"));
+		lblNewLabel.setIcon(new ImageIcon("img\\logo.png"));
 		lblNewLabel.setBounds(23, 0, 571, 564);
 		panel.add(lblNewLabel);
 		

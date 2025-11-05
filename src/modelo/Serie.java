@@ -4,6 +4,10 @@ import java.io.Serializable;
 
 public class Serie implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String nombre;
     private int duracion;
     private String imagenURL;

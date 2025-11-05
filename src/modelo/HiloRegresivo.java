@@ -28,35 +28,28 @@ public class HiloRegresivo extends Thread{
 	}
 
 	public void run() {
-		
 		while (!terminar) {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 
 			while (parar) {
-				try {
-					Thread.sleep(200);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				try { Thread.sleep(200); } catch (InterruptedException e) { e.printStackTrace(); }
 			}
 
-			segundos--;
+			if (segundos == 0 && minutos == 0) {
+				cronometroRegresivo.setText(textoLabel + "00:00");
+				terminar();
+				break; // <- salir del bucle inmediatamente
+			}
+
 			if (segundos == 0) {
-				if (minutos == 0) {
-					terminar();
-					segundos = 0;
-				} else {
-					minutos--;
-					segundos = 59;
-				}
+				minutos--;
+				segundos = 59;
+			} else {
+				segundos--;
 			}
 
-			String txtCronometroReg = textoLabel + minutos + ":" + (segundos < 10 ? "0" + segundos : segundos);
-			cronometroRegresivo.setText(txtCronometroReg);
+			String txt = textoLabel + minutos + ":" + (segundos < 10 ? "0" + segundos : segundos);
+			cronometroRegresivo.setText(txt);
 		}
 	}
 

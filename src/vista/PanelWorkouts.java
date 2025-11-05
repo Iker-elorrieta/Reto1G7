@@ -42,10 +42,11 @@ public class PanelWorkouts extends JFrame {
 	    private JTable tablaWorkouts;
 	    private JTable tablaEjers;
 	    private JComboBox<Integer> nivel;
-	    private DocumentSnapshot usu;
+	
 	    private List<Workouts> todosLosWorkouts;
 	    private JButton btnPerfil;
-	    private int nivelActual;
+	    private int nivelActual;  
+	    private DocumentSnapshot usu;
 	    private List<Workouts> workoutsVisibles = new ArrayList<>();
 	    private DefaultTableModel modeloWorkouts;
 
@@ -55,6 +56,8 @@ public class PanelWorkouts extends JFrame {
 	    static Controlador cntrldr = new Controlador();
 	    private JScrollPane scrollWorkouts;
 	    private JScrollPane scrollEjers;
+	    
+	    
 
 	    public PanelWorkouts(DocumentSnapshot docUsu, List<Workouts> workoutsDisp) {
 	    	    Firestore db;
@@ -98,7 +101,7 @@ public class PanelWorkouts extends JFrame {
 	        panelNivel.add(new JLabel("Nivel:"));
 	        panelNivel.add(nivel);
 
-	        filtrarPorNivel(); // primero llenar el combo
+	        cntrldr.filtrarPorNivel(nivelActual,todosLosWorkouts,nivel); // primero llenar el combo
 	        nivel.setSelectedItem(nivelActual); // luego seleccionar el valor actual
 
 	        nivel.addActionListener(new ActionListener() {
@@ -246,7 +249,7 @@ public class PanelWorkouts extends JFrame {
         /*
          * --------BOTON DE PERFIL----------------
          * */
-        ImageIcon iconoPerfil = new ImageIcon("C:\\Users\\in2dm3-a\\git\\repository\\Reto1G7\\img\\usuIcon.png");
+        ImageIcon iconoPerfil = new ImageIcon("img\\usuIcon.png");
 
         btnPerfil = new JButton(iconoPerfil);
         btnPerfil.setBounds(1106, 11, 89, 86);
@@ -268,7 +271,7 @@ public class PanelWorkouts extends JFrame {
 
        //FONDO
        
-       JLabel fondo = new JLabel(new ImageIcon("C:\\Users\\in2dm3-a\\git\\repository\\Reto1G7\\img\\fondoGym.jpg"));
+       JLabel fondo = new JLabel(new ImageIcon("img\\fondoGym.jpg"));
        fondo.setBounds(0, 0, 1221, 702);
        contentPane.add(fondo);
        fondo.setLayout(null);
@@ -280,30 +283,5 @@ public class PanelWorkouts extends JFrame {
  
     }
 
-		private void filtrarPorNivel() {
-			// TODO Auto-generated method stub
-			  int[] niveles = new int[6]; 
-			    int contador = 0;
-
-			    for (Workouts workout : todosLosWorkouts) {
-			        int nivelWorkout = workout.getNivel();
-			        boolean repetido = false;
-
-			        for (int j = 0; j < contador; j++) {
-			            if (niveles[j] == nivelWorkout) {
-			                repetido = true;
-			                break;
-			            }
-			        }
-
-			        if (!repetido) {
-			            nivel.addItem(nivelWorkout);
-			            niveles[contador] = nivelWorkout;
-			            contador++;
-			        }
-			    }
-
-			    // Seleccionar el nivel actual del usuario
-			    nivel.setSelectedItem(nivelActual);
-			}
+		
 }

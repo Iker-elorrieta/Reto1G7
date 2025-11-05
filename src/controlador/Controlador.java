@@ -1,26 +1,28 @@
 package controlador;
 
 
-import java.awt.Component;
 import java.io.FileOutputStream;
+
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
-
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+
 import javax.swing.table.DefaultTableModel;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
+
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
@@ -34,40 +36,34 @@ import modelo.Serie;
 import modelo.Usuario;
 import modelo.Workouts;
 
+
 public class Controlador {
 	
 	/*
 	 * ------------------------------------------------------- Desde Login para Verificar el Usuario con el email y contraseña -----------------------------------------------------------------------------------------------------------------------------------
 	 * */
-
-	public boolean verificarUsu(String email, String contraseña) {
-	    boolean usuarioValido = false; 
-
+	public DocumentSnapshot verificarUsu(String email, String contraseña) {
 	    try {
-	        // 🔹 Conexión con Firestore
 	        Firestore db = Conexion.conectar();
 
-	        // 🔹 Consulta por email y contraseña
-	        ApiFuture<QuerySnapshot> future = db.collection("usuarios")
+	        List<QueryDocumentSnapshot> resultados = db.collection("usuarios")
 	            .whereEqualTo("email", email)
 	            .whereEqualTo("contraseña", contraseña)
-	            .get();
+	            .get()
+	            .get()
+	            .getDocuments();
 
-	        List<QueryDocumentSnapshot> cliente = future.get().getDocuments();
-
-	        // 🔹 Verificación de resultados
-	        if (cliente != null && !cliente.isEmpty()) {
-	            usuarioValido = true;
+	        if (resultados != null && !resultados.isEmpty()) {
+	            return resultados.get(0); // Devuelve el documento del usuario
 	        }
 
 	    } catch (Exception e) {
-	     
 	        e.printStackTrace();
-	        usuarioValido = false; 
 	    }
-	 
-	    return usuarioValido; 
+
+	    return null; 
 	}
+
 
     /*
      * ----------------------------------------------  Desde Registro Onstruimos con Map ,Verificacion de clave Unica (email) y Formato de id del Usuario-------------------------------------------------------------------------------------------------------
@@ -197,6 +193,41 @@ public class Controlador {
 	    return workoutsDisp;
 	}
 
+	
+	public void filtrarPorNivel(int nivelActual, List<Workouts> todosLosWorkouts, JComboBox<Integer> nivel) {
+		  int[] niveles = new int[6]; 
+		    int contador = 0;
+
+		    for (Workouts workout : todosLosWorkouts) {
+		        int nivelWorkout = workout.getNivel();
+		        
+
+		        // Solo incluir niveles menores o iguales al nivel del usuario
+		        if (nivelWorkout <= nivelActual) {
+		        boolean repetido = false;
+
+		        for (int j = 0; j < contador; j++) {
+		            if (niveles[j] == nivelWorkout) {
+		                repetido = true;
+		                break;
+		            }
+		        }
+
+		        if (!repetido) {
+		            nivel.addItem(nivelWorkout);
+		            niveles[contador] = nivelWorkout;
+		            contador++;
+		        }
+		    }
+		    }
+
+		    // Seleccionar el nivel actual del usuario
+		    nivel.setSelectedItem(nivelActual);
+		
+	}
+
+
+
 
 	public boolean verificarGmail(String email) {
 	    try {
@@ -218,6 +249,72 @@ public class Controlador {
 	    return false;
 	}
 
+	
+
+	public Date validarDatosRegistro(String nmbr, String aplld, String email, String contrsñ, String fechaTexto) {
+	
+		    boolean datosValidos = true;
+		    Date fechaNacmnt = null;
+
+		    if (nmbr.isEmpty() || aplld.isEmpty() || email.isEmpty() || contrsñ.isEmpty()) {
+		        JOptionPane.showMessageDialog(null, "Campos vacíos. Por favor, completa todos los datos.");
+		        datosValidos = false;
+		    }
+
+		    if (!email.contains("@")) {
+		        JOptionPane.showMessageDialog(null, "Correo inválido. Debe contener '@'.");
+		        datosValidos = false;
+		    }
+
+		    try {
+		        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+		        formato.setLenient(false);
+		        fechaNacmnt = formato.parse(fechaTexto);
+		    } catch (Exception ex) {
+		        JOptionPane.showMessageDialog(null, "Fecha inválida. Usa el formato dd/MM/yyyy");
+		        datosValidos = false;
+		    }
+
+		    boolean correoDuplicado = verificarGmail(email);
+		    if (correoDuplicado) {
+		        JOptionPane.showMessageDialog(null, "Este correo ya está registrado.");
+		        datosValidos = false;
+		    }
+
+		    return datosValidos ? fechaNacmnt : null;
+		}
+
+
+	public boolean registrarUsuarioEnFirestore(String nmbr, String aplld, String email, String contrsñ, Date fechaNacmnt) {
+	    try {
+	        Firestore db = conexion.Conexion.conectar();
+	        List<QueryDocumentSnapshot> documentos = db.collection("usuarios").get().get().getDocuments();
+	        String id = "usu" + (documentos.size() + 1);
+	        int nivelActl = 0;
+	        Timestamp fechaTimestamp = Timestamp.of(fechaNacmnt);
+
+	     
+	        boolean registrado = registrarUsuario(id, nmbr, aplld, fechaTimestamp, email, contrsñ, nivelActl);
+
+	        if (registrado) {
+	          
+	            return true;
+	        } else {
+	            JOptionPane.showMessageDialog(null, "Error al registrar el usuario.");
+	            return false;
+	        }
+
+	    } catch (Exception ex) {
+	        JOptionPane.showMessageDialog(null, "Error al conectar con la base de datos.");
+	        ex.printStackTrace();
+	        return false;
+	    }
+	}
+
+
+/**
+ * ------------------------------------------------------------Boton Perfil-------------------------------------------------------------------
+ * */
 
 
 
@@ -243,6 +340,11 @@ public class Controlador {
 	        return null;
 	    }
 	}
+
+	
+	/**
+	 * ------------------------------------------------------------Historial-------------------------------------------------------------------
+	 * */
 
 	public List<Historial> obtenerHistorialWorkouts(String id) {
 		// TODO Auto-generated method stub
@@ -280,6 +382,9 @@ public class Controlador {
 
 	    return historialList;
 	}
+	/**
+	 * ------------------------------------------------------------Ejers-------------------------------------------------------------------
+	 * */
 
 	
 		// TODO Auto-generated method stub
@@ -387,9 +492,21 @@ public class Controlador {
 		    }
 		}
 
-
+		public void actualizarNivelUsuario(String id, int nuevoNivel) {
+			// TODO Auto-generated method stub
+			  try {
+				  Firestore db = Conexion.conectar();
+			        db.collection("usuarios").document(id)
+			          .update("nivel", nuevoNivel);
+			    } catch (Exception e) {
+			        e.printStackTrace();
+			    }
+		}
 
 
 	
 
 }
+	
+
+

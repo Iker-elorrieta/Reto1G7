@@ -42,6 +42,7 @@ public class PanelRegistro extends JFrame {
 	private JLabel lblContr;
 	private JPasswordField passwordField;
 	private JButton btnNewButton;
+	private   Controlador cntrldr = new Controlador();
 	Controlador controlador = new Controlador();
 	private JLabel lblNewLabel;
 
@@ -142,77 +143,31 @@ public class PanelRegistro extends JFrame {
 			/*
 			 * ----------------------------------------------------------Validaciones por cada campo y Formatos,Conexion con FB y metodo de Registro------------------------------------------------------------------------------------------------------------
 			 * */
-		    public void actionPerformed(ActionEvent e) {
-		        String nmbr = txtNmbr.getText();
-		        String aplld = txtAplld.getText();
-		        String email = txtEmail.getText();
-		        String contrsñ = passwordField.getText();
-		        String fechaTexto = txtFechaNacmnt.getText();
-		        Date fechaNacmnt = null;
+			 public void actionPerformed(ActionEvent e) {
+			        String nmbr = txtNmbr.getText();
+			        String aplld = txtAplld.getText();
+			        String email = txtEmail.getText();
+			        String contrsñ = passwordField.getText();
+			        String fechaTexto = txtFechaNacmnt.getText();
 
-		        boolean datosValidos = true;
+			        Date fechaNacmnt = cntrldr.validarDatosRegistro(nmbr, aplld, email, contrsñ, fechaTexto);
 
-		        // Validación de campos vacíos
-		        if (nmbr.isEmpty() || aplld.isEmpty() || email.isEmpty() || contrsñ.isEmpty()) {
-		            JOptionPane.showMessageDialog(null, "Campos vacíos. Por favor, completa todos los datos.");
-		            datosValidos = false;
-		        }
+			        if (fechaNacmnt != null) {
+			            boolean registrado = cntrldr.registrarUsuarioEnFirestore(nmbr, aplld, email, contrsñ, fechaNacmnt);
 
-		        // 🔹 Validación de formato de correo
-		        if (!email.contains("@")) {
-		            JOptionPane.showMessageDialog(null, "Correo inválido. Debe contener '@'.");
-		            datosValidos = false;
-		        }
+			            if (registrado) {
+			                JOptionPane.showMessageDialog(null, "Usuario registrado correctamente.");
 
-		        // 🔹 Validación de fecha
-		        try {
-		            SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
-		            formato.setLenient(false);
-		            fechaNacmnt = formato.parse(fechaTexto);
-		        } catch (Exception ex) {
-		            JOptionPane.showMessageDialog(null, "Fecha inválida. Usa el formato dd/MM/yyyy");
-		            datosValidos = false;
-		        }
+			                PanelLogin principal = new PanelLogin();
+			                principal.setVisible(true);
+			                dispose();
 
-		        // 🔹 Verificación de correo duplicado
-		        boolean correoDuplicado = controlador.verificarGmail(email);
-		        if (correoDuplicado) {
-		            JOptionPane.showMessageDialog(null, "Este correo ya está registrado.");
-		            datosValidos = false;
-		        }
-
-		        // 🔹 Si todo es válido, registrar
-		        if (datosValidos) {
-		            try {
-		            	//Conexion con Firebase
-		                Firestore db = conexion.Conexion.conectar();
-		                List<com.google.cloud.firestore.QueryDocumentSnapshot> documentos = db.collection("usuarios").get().get().getDocuments();
-		                //Un formato para el id del usuario , que se suma segun se crea
-		                String id = "usu" + (documentos.size() + 1);
-		                
-		                int nivelActl = 0;
-		                //Formato de fecha
-		                Timestamp fechaTimestamp = Timestamp.of(fechaNacmnt);
-		                
-		                //llamamos al metodo creado en el controlador
-		                boolean registrado = controlador.registrarUsuario(id, nmbr, aplld, fechaTimestamp, email, contrsñ, nivelActl);
-
-		                if (registrado) {
-		                    JOptionPane.showMessageDialog(null, "Usuario registrado correctamente.");
-		                    PanelLogin principal = new PanelLogin();
-		                    principal.setVisible(true);
-		                    dispose();
-		                } else {
-		                    JOptionPane.showMessageDialog(null, "Error al registrar el usuario.");
-		                }
-		            } catch (Exception ex) {
-		                JOptionPane.showMessageDialog(null, "Error al conectar con la base de datos.");
-		                ex.printStackTrace();
-		            }
-		        }
-		    }
-		});
-
+			            } else {
+			                JOptionPane.showMessageDialog(null, "Error al registrar el usuario.");
+			            }
+			        }
+			    }
+			});
 		btnNewButton.setBounds(275, 395, 156, 35);
 		panel.add(btnNewButton);
 		

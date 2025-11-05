@@ -22,46 +22,64 @@ public class PanelEjercicios extends JFrame {
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
 
-    // Left: cronómetro principal
+    /*******************************
+     * BLOQUE: Variables principales de la interfaz
+     *******************************/
     private JLabel lblCronoPrincipal;
     private HiloCronometro hiloCronoPrincipal;
 
-    // Center: panel ejercicio + lista series
     private JPanel panelCentral;
     private DefaultTableModel modeloTabla;
     private JTable tablaEjers;
 
-    // Bottom: control
     private JButton btnIniciar;
     private JButton btnSalir;
 
-    // Datos del workout
+    /*******************************
+     * BLOQUE: Datos del workout y control de estado
+     *******************************/
     private Workouts workoutSeleccionado;
     private List<Ejercicios> ejercicios;
     private int indiceEjercicio = 0; // índice del ejercicio actual
     private int contSeriesActual = 0; // serie actual dentro del ejercicio
     private ArrayList<Integer> tiemposPorEjercicio = new ArrayList<>();
+    private int ejerciciosCompletados = 0;
+    private DocumentSnapshot usuario; //
+    private ArrayList<Component> fotos;
 
-    // Hilos activos por ejercicio/serie
+    /*******************************
+     * BLOQUE: Hilos activos (series, descansos y cronómetros)
+     *******************************/
     private HiloRegresivo hiloSerie;
     private HiloRegresivo hiloDescanso;
     private HiloCronometro hiloEjercicio;
 
-    // Labels dinámicos para la serie activa (nombre, repeticiones, foto, cronometro regresivo)
+    /*******************************
+     * BLOQUE: Labels dinámicos (nombre, reps, imagen, cronómetro)
+     *******************************/
     private JLabel lblNombreEjercicio;
     private JLabel lblRepeticiones;
     private JLabel lblFotoEjercicio;
-    private JLabel lblCronoRegresivo; // muestra 5s de pre-cuenta y luego tiempo de serie
+    private JLabel lblCronoRegresivo;
+    private JLabel labelProgreso;
+    private JProgressBar barraProgreso;
+    
 
-    // Controlador auxiliar (ya lo usabas)
     private Controlador controlador = new Controlador();
 
+    /*******************************
+     * BLOQUE: Constructor principal
+     *******************************/
     public PanelEjercicios(DocumentSnapshot usu, Workouts workoutSeleccionado) {
+    	this.usuario=usu;
         this.workoutSeleccionado = workoutSeleccionado;
         this.ejercicios = workoutSeleccionado.getEjers();
         initialize();
     }
 
+    /*******************************
+     * BLOQUE: Inicialización de la interfaz
+     *******************************/
     private void initialize() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 1221, 741);
@@ -70,18 +88,26 @@ public class PanelEjercicios extends JFrame {
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         setContentPane(contentPane);
         contentPane.setLayout(null);
+        
+        
+        
+        /***** Subbloque: Barra de progreso *****/
+        barraProgreso = new JProgressBar(0, ejercicios.size());
+        barraProgreso.setValue(0);
+        barraProgreso.setStringPainted(true);
+        barraProgreso.setBounds(670, 620, 400, 50);
+        contentPane.add(barraProgreso);
 
-        // --------- Cronómetro principal (izquierda) ----------
+
+        /***** Subbloque: Cronómetro principal *****/
         lblCronoPrincipal = new JLabel("Total: 00:00");
         lblCronoPrincipal.setForeground(Color.WHITE);
         lblCronoPrincipal.setFont(new Font("Tahoma", Font.BOLD, 24));
         lblCronoPrincipal.setBounds(20, 20, 240, 40);
         contentPane.add(lblCronoPrincipal);
-
-        // No instanciamos hilo todavía; se creará la primera vez que se pulse iniciar
         hiloCronoPrincipal = new HiloCronometro(lblCronoPrincipal);
 
-        // --------- Nombre del workout (arriba derecha) ----------
+        /***** Subbloque: Nombre del workout *****/
         String nombreWork = workoutSeleccionado.getNombre();
         JLabel lblWorkout = new JLabel("Workout: " + nombreWork);
         lblWorkout.setForeground(Color.WHITE);
@@ -89,14 +115,13 @@ public class PanelEjercicios extends JFrame {
         lblWorkout.setBounds(950, 20, 250, 30);
         contentPane.add(lblWorkout);
 
-        // --------- Panel central con info del ejercicio actual ----------
+        /***** Subbloque: Panel central con info del ejercicio actual *****/
         panelCentral = new JPanel();
         panelCentral.setBackground(Color.GRAY);
         panelCentral.setBounds(300, 70, 850, 530);
         panelCentral.setLayout(null);
         contentPane.add(panelCentral);
 
-        // Labels que muestran la serie actual
         lblNombreEjercicio = new JLabel("");
         lblNombreEjercicio.setForeground(Color.WHITE);
         lblNombreEjercicio.setFont(new Font("Tahoma", Font.BOLD, 20));
@@ -117,14 +142,13 @@ public class PanelEjercicios extends JFrame {
         lblFotoEjercicio.setText("Foto");
         panelCentral.add(lblFotoEjercicio);
 
-        // Cronómetro regresivo visible en el centro para la serie / descanso
         lblCronoRegresivo = new JLabel("Serie: 00:00");
         lblCronoRegresivo.setForeground(Color.WHITE);
         lblCronoRegresivo.setFont(new Font("Tahoma", Font.BOLD, 28));
         lblCronoRegresivo.setBounds(350, 200, 300, 50);
         panelCentral.add(lblCronoRegresivo);
 
-        // --------- Tabla con todas las series (derecha dentro del central) ----------
+        /***** Subbloque: Tabla de ejercicios (vista global) *****/
         String[] columnas = { "Nombre", "Repeticiones", "Imagen" };
         modeloTabla = new DefaultTableModel(columnas, 0) {
             private static final long serialVersionUID = 1L;
@@ -134,11 +158,9 @@ public class PanelEjercicios extends JFrame {
         JScrollPane scroll = new JScrollPane(tablaEjers);
         scroll.setBounds(350, 20, 480, 150);
         panelCentral.add(scroll);
-
-        // Rellenar tabla con todos los ejercicios/series (vista global)
         cargarTablaSeries();
 
-        // --------- Botones inferiores ----------
+        /***** Subbloque: Botones inferiores *****/
         btnIniciar = new JButton("Iniciar");
         btnIniciar.setBackground(new Color(0, 128, 0));
         btnIniciar.setForeground(Color.WHITE);
@@ -151,23 +173,23 @@ public class PanelEjercicios extends JFrame {
         btnSalir.setBounds(520, 620, 120, 50);
         contentPane.add(btnSalir);
 
-        // Acción boton iniciar/pausar/siguiente
+        /***** Subbloque: Listeners de botones *****/
+        /***** Subbloque: Listeners de botones *****/
         btnIniciar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                manejarBotonIniciar();
+                manejarBotonIniciar(); // Llama al método que maneja los estados del botón
             }
         });
 
-        // Acción boton salir -> summary
         btnSalir.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                mostrarResumen(true); // true -> salimos antes de terminar
+                mostrarResumen(true); // Llama al método para mostrar el resumen y cerrar
             }
         });
 
-        // Mostrar primer ejercicio si existe
+        /***** Subbloque: Mostrar primer ejercicio *****/
         if (!ejercicios.isEmpty()) {
             mostrarEjercicio(indiceEjercicio);
         } else {
@@ -176,60 +198,73 @@ public class PanelEjercicios extends JFrame {
         }
     }
 
-    // Carga la tabla con la lista completa de ejercicios (nombre, repeticiones, placeholder imagen)
+    /*******************************
+     * BLOQUE: Cargar tabla con los ejercicios
+     *******************************/
     private void cargarTablaSeries() {
         modeloTabla.setRowCount(0);
         for (Ejercicios ej : ejercicios) {
-            // suponiendo que Ejercicios tiene getNombre() y getRepeticiones() o similar
             String reps = (ej.getSeries() != null ? String.valueOf(ej.getSeries().size()) + " series" : "0");
             modeloTabla.addRow(new Object[] { ej.getNombre(), reps, "img" });
         }
     }
 
-    // Muestra los datos del ejercicio con índice idx en el centro
+    /*******************************
+     * BLOQUE: Mostrar ejercicio actual en el panel central
+     *******************************/
     private void mostrarEjercicio(int idx) {
         if (idx < 0 || idx >= ejercicios.size()) return;
         Ejercicios ej = ejercicios.get(idx);
         lblNombreEjercicio.setText(ej.getNombre());
-        lblRepeticiones.setText(ej.getDescripcion() != null ? ej.getDescripcion() : "");
-        // si tu clase tiene URL/Imagen -> cargarla. Aquí usamos placeholder
+        lblRepeticiones.setText(ej.getDescripcion() != null ? ej.getDescripcion() + " — " + ej.getSeries().size() + " series" : "");
         lblFotoEjercicio.setText("Foto: " + ej.getNombre());
-        // Reset de contSeries para este ejercicio
         contSeriesActual = 0;
-
-        // Preparar cronometro del ejercicio (no arrancar aún)
-        hiloEjercicio = new HiloCronometro(new JLabel("")); // label temporal para obtener minutos/segundos
-        // No ponemos hiloEjercicio.start() aquí — se inicia con el primer inicio de la serie.
+        hiloEjercicio = new HiloCronometro(new JLabel("")); // no visible
     }
-
-    // Maneja el comportamiento del botón iniciar/pausar/siguiente
+    
+    /*******************************
+     * BLOQUE: Cargar siguiente ejercicio
+     *******************************/
+    private void cargarSiguienteEjercicio() {
+        indiceEjercicio++;
+        if (indiceEjercicio < ejercicios.size()) {
+            mostrarEjercicio(indiceEjercicio);
+            btnIniciar.setText("Iniciar");
+            btnIniciar.setBackground(new Color(0, 128, 0));
+            btnIniciar.setForeground(Color.WHITE);
+        } else {
+            barraProgreso.setValue(ejercicios.size());
+            subirNivelUsuario();
+            mostrarResumen(false);
+        }
+    }
+    /*******************************
+     * BLOQUE: Lógica del botón Iniciar / Pausar / Reanudar / Siguiente
+     *******************************/
     private synchronized void manejarBotonIniciar() {
         String texto = btnIniciar.getText();
 
-        // Primer arranque del cronómetro principal si no ha empezado nunca
+        // ---- Iniciar cronómetro principal si no está activo ----
         if (!hiloCronoPrincipal.isAlive() && 
             ("Iniciar".equals(texto) || "Siguiente Serie".equals(texto) || "Siguiente Ejercicio".equals(texto))) {
             hiloCronoPrincipal = new HiloCronometro(lblCronoPrincipal);
             hiloCronoPrincipal.start();
         }
 
-        // ---- Caso 1: INICIAR / SIGUIENTE SERIE / SIGUIENTE EJERCICIO ----
+        /***** Caso 1: Iniciar / siguiente serie o ejercicio *****/
         if ("Iniciar".equals(texto) || "Siguiente Serie".equals(texto) || "Siguiente Ejercicio".equals(texto)) {
             btnIniciar.setText("Pausar");
             btnIniciar.setBackground(Color.ORANGE);
             btnIniciar.setForeground(Color.BLACK);
 
-            // Arranca cronómetro de ejercicio si no estaba corriendo
             if (hiloEjercicio == null || !hiloEjercicio.isAlive()) {
                 hiloEjercicio = new HiloCronometro(new JLabel("Ejercicio: 00:00"));
                 hiloEjercicio.start();
             }
 
-            // Validar índice de ejercicio
             if (indiceEjercicio < ejercicios.size()) {
                 Ejercicios ejercicioActual = ejercicios.get(indiceEjercicio);
 
-                // Si aún quedan series del ejercicio actual
                 if (ejercicioActual.getSeries() != null && contSeriesActual < ejercicioActual.getSeries().size()) {
 
                     // --- 5 segundos de pre-cuenta ---
@@ -237,65 +272,64 @@ public class PanelEjercicios extends JFrame {
                     final HiloRegresivo preCuenta = new HiloRegresivo(lblCronoRegresivo, 5);
                     preCuenta.start();
 
-                    // --- Esperar fin de preCuenta y lanzar serie ---
-                    Thread hiloInicioSerie = new Thread() {
-                        public void run() {
-                            try {
-                                while (preCuenta.isAlive()) {
-                                    Thread.sleep(50);
-                                }
-                            } catch (InterruptedException ex) {
-                                ex.printStackTrace();
-                            }
-
-                            // Iniciar serie y descanso
-                            int segundosSerie = 0;
-                            int tiempoDescanso = 0;
-                            try {
-                          
-                                tiempoDescanso = ejercicioActual.getSeries().get(contSeriesActual).getDuracion();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-                            hiloSerie = new HiloRegresivo(lblCronoRegresivo, segundosSerie);
-                            hiloDescanso = new HiloRegresivo(new JLabel("Descanso: 0:00"), tiempoDescanso);
-
-                            HiloEsperar hiloEsperar = new HiloEsperar(
-                                    hiloSerie, 
-                                    hiloDescanso, 
-                                    hiloEjercicio, 
-                                    btnIniciar, 
-                                    indiceEjercicio, 
-                                    workoutSeleccionado, 
-                                    ejercicioActual, 
-                                    contSeriesActual,
-                                    null, 
-                                    panelCentral, 
-                                    null, 
-                                    tiemposPorEjercicio
-                            );
-
-                            hiloEsperar.start();
+                    // --- Esperar preCuenta y lanzar serie ---
+                    Thread hiloInicioSerie = new Thread(() -> {
+                        try {
+                            while (preCuenta.isAlive()) Thread.sleep(50);
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
                         }
-                    };
+
+                        int segundosSerie = 0;
+                        int tiempoDescanso = 0;
+                        try {
+                            // 🔧 Posible corrección: probablemente aquí faltaba duración de la SERIE, no del descanso
+                        	segundosSerie = ejercicioActual.getSeries().get(contSeriesActual).getDuracion();
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        hiloSerie = new HiloRegresivo(lblCronoRegresivo, segundosSerie);
+                        hiloDescanso = new HiloRegresivo(new JLabel("Descanso: 0:00"), tiempoDescanso);
+
+                        HiloEsperar hiloEsperar = new HiloEsperar(
+                        	    hiloSerie,
+                        	    hiloDescanso,
+                        	    hiloEjercicio,
+                        	    btnIniciar,
+                        	    ejerciciosCompletados,
+                        	    workoutSeleccionado,
+                        	    ejercicioActual,
+                        	    contSeriesActual,
+                        	    null,                 // 🔹 labels (no lo usas)
+                        	    panelCentral,
+                        	    fotos,
+                        	    tiemposPorEjercicio,
+                        	    barraProgreso,        // 🔹 referencia a la barra
+                        	    labelProgreso         // 🔹 referencia al texto de progreso
+                        	);
+
+                        hiloEsperar.start();
+                    });
                     hiloInicioSerie.start();
 
+                    
+                    
                 } else {
-                    // Si ya no hay series -> preparar siguiente ejercicio
                     btnIniciar.setText("Siguiente Ejercicio");
                     btnIniciar.setBackground(new Color(0, 128, 0));
                     btnIniciar.setForeground(Color.WHITE);
+                    cargarSiguienteEjercicio();
                 }
 
             } else {
-                // Si ya no quedan ejercicios, marcamos como terminado
                 btnIniciar.setText("Workout Terminado");
                 btnIniciar.setEnabled(false);
             }
         }
 
-        // ---- Caso 2: PAUSAR ----
+        /***** Caso 2: Pausar *****/
         else if ("Pausar".equals(texto)) {
             btnIniciar.setText("Reanudar");
             btnIniciar.setBackground(new Color(70, 130, 180));
@@ -307,7 +341,7 @@ public class PanelEjercicios extends JFrame {
             if (hiloDescanso != null) hiloDescanso.cambiarEstado();
         }
 
-        // ---- Caso 3: REANUDAR ----
+        /***** Caso 3: Reanudar *****/
         else if ("Reanudar".equals(texto)) {
             btnIniciar.setText("Pausar");
             btnIniciar.setBackground(Color.ORANGE);
@@ -319,8 +353,11 @@ public class PanelEjercicios extends JFrame {
             if (hiloDescanso != null) hiloDescanso.cambiarEstado();
         }
 
-        // ---- Caso 4: SIGUIENTE EJERCICIO ----
+        /***** Caso 4: Siguiente ejercicio *****/
         else if ("Siguiente Ejercicio".equals(texto)) {
+            ejerciciosCompletados++;
+            barraProgreso.setValue(ejerciciosCompletados);
+
             indiceEjercicio++;
             if (indiceEjercicio < ejercicios.size()) {
                 mostrarEjercicio(indiceEjercicio);
@@ -328,20 +365,52 @@ public class PanelEjercicios extends JFrame {
                 btnIniciar.setBackground(new Color(0, 128, 0));
                 btnIniciar.setForeground(Color.WHITE);
             } else {
+                // Workout completado
+                barraProgreso.setValue(ejercicios.size());
+                 subirNivelUsuario(); // ⬅️ actualiza el nivel
                 mostrarResumen(false);
             }
         }
 
-        // ---- Caso 5: WORKOUT TERMINADO ----
+
+        /***** Caso 5: Workout terminado *****/
         else if ("Workout Terminado".equals(texto)) {
             mostrarResumen(false);
         }
     }
 
+    private void subirNivelUsuario() {
+		// TODO Auto-generated method stub
+    
+    	    try {
+    	        int nivelActual = usuario.getLong("nivel").intValue();
+    	        int nuevoNivel = nivelActual + 1;
 
-    // Muestra resumen final. si esSalida=true -> usuario pulsó salir, si false -> final natural
+    	        controlador.actualizarNivelUsuario(usuario.getId(), nuevoNivel);
+
+    	        JOptionPane.showMessageDialog(
+    	            this,
+    	            "¡Nivel completado! Has subido al nivel " + nuevoNivel + " 🎉",
+    	            "Nivel aumentado",
+    	            JOptionPane.INFORMATION_MESSAGE
+    	        );
+
+    	    } catch (Exception e) {
+    	        e.printStackTrace();
+    	        JOptionPane.showMessageDialog(
+    	            this,
+    	            "Error al actualizar el nivel del usuario.",
+    	            "Error",
+    	            JOptionPane.ERROR_MESSAGE
+    	        );
+    	    }
+    	}
+
+
+    /*******************************
+     * BLOQUE: Mostrar resumen final
+     *******************************/
     private void mostrarResumen(boolean esSalida) {
-        // Parar hilos si están corriendo
         try {
             if (hiloCronoPrincipal != null) hiloCronoPrincipal.terminar();
             if (hiloEjercicio != null) hiloEjercicio.terminar();
@@ -349,34 +418,27 @@ public class PanelEjercicios extends JFrame {
             if (hiloDescanso != null) hiloDescanso.terminar();
         } catch (Exception e) { /* ignore */ }
 
-        // Calcular tiempo total invertido (tomamos el cronómetro principal)
-        String tiempoTotal = lblCronoPrincipal.getText(); // formato "Total: mm:ss" o similar
-
-        // porcentaje completado
+        String tiempoTotal = lblCronoPrincipal.getText();
         int realizados = Math.min(indiceEjercicio + (contSeriesActual > 0 ? 1 : 0), ejercicios.size());
         int total = ejercicios.size();
         int porcentaje = total == 0 ? 100 : (realizados * 100 / total);
 
-        // mensaje motivacional simple según porcentaje
         String mensaje;
         if (porcentaje == 100 && !esSalida) mensaje = "¡Enhorabuena! Has completado el workout 💪";
         else if (porcentaje >= 75) mensaje = "¡Muy bien! Estás cerca del objetivo.";
         else if (porcentaje >= 40) mensaje = "Buen trabajo — sigue así.";
         else mensaje = "¡A por ello! Cada minuto cuenta.";
 
-        // Dialogo resumen
-        String resumen = String.format("<html><body style='width:300px'>Tiempo total: %s<br/>Ejercicios completados: %d/%d (%d%%)<br/><br/>%s</body></html>",
-                tiempoTotal, realizados, total, porcentaje, mensaje);
+        String resumen = String.format(
+            tiempoTotal, realizados, total, porcentaje, mensaje
+        );
 
-        int opcion = JOptionPane.showOptionDialog(this, resumen, "Resumen workout",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
-                new String[] { "Confirmar" }, "Confirmar");
+        int opcion = JOptionPane.showOptionDialog(
+            this, resumen, "Resumen workout",
+            JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+            null, new String[] { "Confirmar" }, "Confirmar"
+        );
 
-        // Al confirmar, volvemos a la pantalla principal (en este ejemplo cerramos la ventana)
-        if (opcion == 0) {
-            this.dispose();
-            // Aquí en tu app deberías abrir la pantalla principal de workouts
-        }
+        if (opcion == 0) this.dispose();
     }
-
 }

@@ -14,12 +14,9 @@
   <artifactId>firebase-admin</artifactId>
   <version>8.1.0</version>
 </dependency>
-    <dependency>
-    	<groupId>AgendaMCV</groupId>
-    	<artifactId>AgendaMCV</artifactId>
-    	<version>0.0.1-SNAPSHOT</version>
-    </dependency>
+    
      </dependencies>
+     
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
