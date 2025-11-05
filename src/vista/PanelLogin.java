@@ -185,7 +185,7 @@ public class PanelLogin extends JFrame {
 		panel.add(btnRgstr);
 		
 		JLabel lblNewLabel = new JLabel("");
-		lblNewLabel.setIcon(new ImageIcon(getClass().getResource("/img/logo.png")));
+		lblNewLabel.setIcon(new ImageIcon("img\\logo.png"));
 		lblNewLabel.setBounds(23, 0, 571, 564);
 		panel.add(lblNewLabel);
 		

@@ -173,7 +173,7 @@ public class PanelRegistro extends JFrame {
 		
 		lblNewLabel = new JLabel("");
 		lblNewLabel.setBackground(new Color(192, 192, 192));
-		lblNewLabel.setIcon(new ImageIcon(getClass().getResource("/img/logo.png")));
+		lblNewLabel.setIcon(new ImageIcon("C:\\Users\\in2dm3-a\\Pictures\\logoBajaExposicion.png"));
 		lblNewLabel.setBounds(0, 0, 641, 579);
 		panel.add(lblNewLabel);
 

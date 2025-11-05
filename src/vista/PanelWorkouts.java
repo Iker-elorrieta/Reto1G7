@@ -237,6 +237,11 @@ public class PanelWorkouts extends JFrame {
         
         
 
+        // 🔹 Botón detalles
+        JButton btnDtlls = new JButton("Ver detalles");
+        btnDtlls.setBounds(866, 97, 150, 43);
+        contentPane.add(btnDtlls);	
+        
         
         
         
@@ -244,7 +249,7 @@ public class PanelWorkouts extends JFrame {
         /*
          * --------BOTON DE PERFIL----------------
          * */
-        ImageIcon iconoPerfil = new ImageIcon(getClass().getResource("/img/usuIcon.png"));
+        ImageIcon iconoPerfil = new ImageIcon("img\\usuIcon.png");
 
         btnPerfil = new JButton(iconoPerfil);
         btnPerfil.setBounds(1106, 11, 89, 86);
@@ -266,7 +271,7 @@ public class PanelWorkouts extends JFrame {
 
        //FONDO
        
-        JLabel fondo = new JLabel(new ImageIcon(getClass().getResource("/img/fondoGym.jpg")));
+       JLabel fondo = new JLabel(new ImageIcon("img\\fondoGym.jpg"));
        fondo.setBounds(0, 0, 1221, 702);
        contentPane.add(fondo);
        fondo.setLayout(null);
