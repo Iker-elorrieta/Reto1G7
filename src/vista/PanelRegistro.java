@@ -6,10 +6,12 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Firestore;
 
 import controlador.Controlador;
-import modelo.Usuario;
+
+
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -135,6 +137,11 @@ public class PanelRegistro extends JFrame {
 		btnNewButton.setBackground(new Color(255, 255, 255));
 		btnNewButton.setFont(new Font("Candara", Font.BOLD, 18));
 		btnNewButton.addActionListener(new ActionListener() {
+			
+			
+			/*
+			 * ----------------------------------------------------------Validaciones por cada campo y Formatos,Conexion con FB y metodo de Registro------------------------------------------------------------------------------------------------------------
+			 * */
 		    public void actionPerformed(ActionEvent e) {
 		        String nmbr = txtNmbr.getText();
 		        String aplld = txtAplld.getText();
@@ -145,7 +152,7 @@ public class PanelRegistro extends JFrame {
 
 		        boolean datosValidos = true;
 
-		        // 🔹 Validación de campos vacíos
+		        // Validación de campos vacíos
 		        if (nmbr.isEmpty() || aplld.isEmpty() || email.isEmpty() || contrsñ.isEmpty()) {
 		            JOptionPane.showMessageDialog(null, "Campos vacíos. Por favor, completa todos los datos.");
 		            datosValidos = false;
@@ -177,12 +184,18 @@ public class PanelRegistro extends JFrame {
 		        // 🔹 Si todo es válido, registrar
 		        if (datosValidos) {
 		            try {
+		            	//Conexion con Firebase
 		                Firestore db = conexion.Conexion.conectar();
 		                List<com.google.cloud.firestore.QueryDocumentSnapshot> documentos = db.collection("usuarios").get().get().getDocuments();
+		                //Un formato para el id del usuario , que se suma segun se crea
 		                String id = "usu" + (documentos.size() + 1);
+		                
 		                int nivelActl = 0;
-
-		                boolean registrado = controlador.registrarUsuario(id, nmbr, aplld, fechaNacmnt, email, contrsñ, nivelActl);
+		                //Formato de fecha
+		                Timestamp fechaTimestamp = Timestamp.of(fechaNacmnt);
+		                
+		                //llamamos al metodo creado en el controlador
+		                boolean registrado = controlador.registrarUsuario(id, nmbr, aplld, fechaTimestamp, email, contrsñ, nivelActl);
 
 		                if (registrado) {
 		                    JOptionPane.showMessageDialog(null, "Usuario registrado correctamente.");

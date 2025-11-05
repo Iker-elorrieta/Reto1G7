@@ -1,20 +1,24 @@
 package modelo;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Ejercicios {
+public class Ejercicios implements Serializable {
 
 	
-    private String nombre;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String nombre;
     private String descripcion;
-    private int orden;
     private int descanso;
     private List<Serie> series;
 
-    public Ejercicios(String nombre, String descripcion, int orden, int descanso, List<Serie> series) {
+    public Ejercicios(String nombre, String descripcion, int descanso, List<Serie> series) {
         this.nombre = nombre;
         this.descripcion = descripcion;
-        this.orden = orden;
+     
         this.descanso = descanso;
         this.series = series;
     }
@@ -35,13 +39,7 @@ public class Ejercicios {
 		this.descripcion = descripcion;
 	}
 
-	public int getOrden() {
-		return orden;
-	}
-
-	public void setOrden(int orden) {
-		this.orden = orden;
-	}
+	
 
 	public int getDescanso() {
 		return descanso;

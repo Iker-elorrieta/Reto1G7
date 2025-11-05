@@ -1,15 +1,17 @@
 package modelo;
 
-public class Serie {
+import java.io.Serializable;
+
+public class Serie implements Serializable{
 
 	private String nombre;
-    private int repeticiones;
     private int duracion;
     private String imagenURL;
 
-    public Serie(String nombre, int repeticiones, int duracion, String imagenURL) {
+    public Serie(String nombre, int duracion, String imagenURL)
+ {
         this.nombre = nombre;
-        this.repeticiones = repeticiones;
+
         this.duracion = duracion;
         this.imagenURL = imagenURL;
     }
@@ -22,13 +24,7 @@ public class Serie {
 		this.nombre = nombre;
 	}
 
-	public int getRepeticiones() {
-		return repeticiones;
-	}
 
-	public void setRepeticiones(int repeticiones) {
-		this.repeticiones = repeticiones;
-	}
 
 	public int getDuracion() {
 		return duracion;

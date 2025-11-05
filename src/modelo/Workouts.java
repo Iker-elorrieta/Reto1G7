@@ -24,6 +24,11 @@ public  class  Workouts implements Serializable {
 	    }
 
 
+	public Workouts() {
+		// TODO Auto-generated constructor stub
+	}
+
+
 	public String getNombre() {
 		return nombre;
 	}

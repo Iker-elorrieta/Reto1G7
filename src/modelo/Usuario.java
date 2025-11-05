@@ -36,6 +36,13 @@ public class Usuario implements Serializable{
 
 
 
+	public Usuario() {
+		// TODO Auto-generated constructor stub
+	}
+
+
+
+
 	public int getNivelActual() {
 		return nivelActual;
 	}

@@ -1,24 +1,29 @@
 package vista;
 
 import java.awt.Color;
-import java.awt.EventQueue;
+
 import java.awt.Font;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
 
 import controlador.Controlador;
-import modelo.Usuario;
+
 import modelo.Workouts;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class PanelModificarUsu extends JFrame {
 
@@ -33,7 +38,7 @@ public class PanelModificarUsu extends JFrame {
 	private JLabel lblEmail;
 	private JLabel lblContr;
 	private JPasswordField passwordField;
-	private JButton btnNewButton;
+
 	Controlador controlador = new Controlador();
 	
 	/**
@@ -59,21 +64,26 @@ public class PanelModificarUsu extends JFrame {
 	    String apellido = usu.getString("apellido");
 	    String email = usu.getString("email");
 	    String contraseña = usu.getString("contraseña");
+	
 	    String fechaTexto = "";
-	    if (usu.getDate("fechaNacimiento") != null) {
-	 
-	    	String fechaRaw = usu.getString("fechaNacimiento");
-
-	    	if (fechaRaw != null && !fechaRaw.isEmpty()) {
-	    	    fechaTexto = fechaRaw;
-	    	}
-
+	    Object fchRecibida = usu.get("fechaNacimiento");
+	    
+	    
+	    if (fchRecibida instanceof Timestamp) {
+	        Date fecha = ((Timestamp) fchRecibida).toDate();
+	        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+	        fechaTexto = sdf.format(fecha);
+	    } else if (fchRecibida instanceof String) {
+	        fechaTexto = (String) fchRecibida;
 	    }
 
+
+	    
+
 	    // 🔹 Título
-	    JLabel lblTitulo = new JLabel("Hola, " + nombre);
+	    JLabel lblTitulo = new JLabel("Hola, " + nombre + "!");
 	    lblTitulo.setFont(new Font("Verdana", Font.BOLD, 28));
-	    lblTitulo.setBounds(167, 47, 348, 40);
+	    lblTitulo.setBounds(172, 50, 348, 40);
 	    panel.add(lblTitulo);
 
 	    // 🔹 Campos
@@ -91,6 +101,7 @@ public class PanelModificarUsu extends JFrame {
 
 	    txtEmail = new JTextField(email);
 	    txtEmail.setBounds(240, 290, 226, 26);
+	    txtEmail.setEditable(false);
 	    panel.add(txtEmail);
 
 	    passwordField = new JPasswordField(contraseña);
@@ -127,6 +138,55 @@ public class PanelModificarUsu extends JFrame {
 	    lblContr.setFont(new Font("Candara", Font.BOLD, 18));
 	    lblContr.setBounds(79, 344, 118, 20);
 	    panel.add(lblContr);
+	    
+	    JButton btnGuardar = new JButton("Guardar");
+	    btnGuardar.addActionListener(new ActionListener() {
+	        public void actionPerformed(ActionEvent e) {
+	            String nvNmbr = txtNmbr.getText();
+	            String nvAplld = txtAplld.getText();
+	            String nvCntrsñ = new String(passwordField.getPassword());
+	            String nvFecha = txtFechaNacmnt.getText();
+
+	            Timestamp nvFch = null;
+	            try {
+	                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+	                Date fecha = sdf.parse(nvFecha);
+	                nvFch = Timestamp.of(fecha);
+	            } catch (Exception ex) {
+	                JOptionPane.showMessageDialog(null, "Fecha inválida. Usa el formato dd/MM/yyyy");
+	                return;
+	            }
+
+	            String id = usu.getId();
+
+	            // 🔹 Actualizamos los datos y recibimos el DocumentSnapshot actualizado
+	            DocumentSnapshot nvUsu = controlador.nvsDatos(id, nvNmbr, nvAplld, nvFch, nvCntrsñ);
+
+	            if (nvUsu != null) {
+	                JOptionPane.showMessageDialog(null, "Datos actualizados correctamente.");
+	                PanelUsu panel = new PanelUsu(nvUsu, todosLosWorkouts);
+	                panel.setVisible(true);
+	                dispose();
+	            } else {
+	                JOptionPane.showMessageDialog(null, "Error al actualizar los datos.");
+	            }
+	        }
+	    });
+
+	    btnGuardar.setBounds(188, 401, 118, 40);
+	    panel.add(btnGuardar);
+	    
+	    JButton btnCancelar = new JButton("Cancelar");
+	    btnCancelar.addActionListener(new ActionListener() {
+	    	public void actionPerformed(ActionEvent e) {
+	    		PanelUsu atras = new PanelUsu(usu,todosLosWorkouts);
+	    		atras.setVisible(true);
+	            dispose();
+	    		
+	    	}
+	    });
+	    btnCancelar.setBounds(348, 401, 118, 40);
+	    panel.add(btnCancelar);
 	}
 }
 
